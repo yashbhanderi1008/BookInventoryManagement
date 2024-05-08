@@ -26,7 +26,7 @@ export class authorService {
         const isPassword = await bcrypt.compare(password, author.password);
 
         if (isPassword) {
-            const token = jwt.sign({ aId: author._id!.toString() }, 'YashBhanderi', { algorithm: 'HS256' });
+            const token = jwt.sign({ aId: author._id!.toString() }, process.env.SECRET_KEY!, { algorithm: 'HS256' });
 
             return token;
         } else {

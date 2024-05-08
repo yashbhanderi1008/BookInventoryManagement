@@ -19,7 +19,7 @@ export const authorizeAuthor = async (req: Request, res: Response, next: NextFun
 
         token = token.replace('Bearer ', '');
 
-        const decoded = jwt.verify(token, 'YashBhanderi') as { aId: Types.ObjectId };
+        const decoded = jwt.verify(token, process.env.SECRET_KEY!) as { aId: Types.ObjectId };
 
         const author = await Author.findById(decoded.aId);
 
@@ -45,7 +45,7 @@ export const authorizeAdmin = async (req: Request, res: Response, next: NextFunc
 
         token = token.replace('Bearer ', '');
 
-        const decoded = jwt.verify(token, 'YashBhanderi') as { adminId: Types.ObjectId };
+        const decoded = jwt.verify(token, process.env.SECRET_KEY!) as { adminId: Types.ObjectId };
 
         const admin = await Admin.findById(decoded.adminId);
 

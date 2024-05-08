@@ -27,7 +27,7 @@ export class adminService{
         const isPassword = await bcrypt.compare(password, admin.password);
 
         if (isPassword) {
-            const token = jwt.sign({ adminId: admin._id!.toString() }, 'YashBhanderi', { algorithm: 'HS256' });
+            const token = jwt.sign({ adminId: admin._id!.toString() }, process.env.SECRET_KEY!, { algorithm: 'HS256' });
 
             return token;
         } else {
