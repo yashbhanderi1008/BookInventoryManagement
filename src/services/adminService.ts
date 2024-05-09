@@ -2,12 +2,14 @@ import Admin from '../models/adminModel';
 import { adminInterface } from '../constants/interface';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import HttpStatusConstants from '../constants/HTTPStatusConstant';
+import CustomError from '../utils/customError';
 
 export class adminService{
 
     static async createAdmin(adminDetails: adminInterface): Promise<void> {
         if (await Admin.findOne({ userName: adminDetails.userName })) {
-            throw new Error("Admin already exists");
+            throw new CustomError(HttpStatusConstants.DUPLICATE_KEY_VALUE.httpStatusCode, "Admin already exists")
         }
 
         adminDetails.password = await bcrypt.hash(adminDetails.password, 10);
@@ -21,7 +23,7 @@ export class adminService{
         const admin = await Admin.findOne({ userName: userName });
 
         if (!admin) {
-            throw new Error("Admin doesn't exists");
+            throw new CustomError(HttpStatusConstants.RESOURCE_NOT_FOUND.httpStatusCode, "Admin doesn't exists")
         }
 
         const isPassword = await bcrypt.compare(password, admin.password);
@@ -31,7 +33,7 @@ export class adminService{
 
             return token;
         } else {
-            throw new Error("Wrong credemtials");
+            throw new CustomError(HttpStatusConstants.INVALID_DATA.httpStatusCode, "Wrong credemtials")
         }
     }
 }

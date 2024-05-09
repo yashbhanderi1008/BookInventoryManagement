@@ -1,6 +1,8 @@
 import Category from "../models/categoryModel";
 import { categoryInterface } from "../constants/interface";
 import { Types } from "mongoose";
+import CustomError from "../utils/customError";
+import HttpStatusConstants from "../constants/HTTPStatusConstant";
 
 export class categoryService {
     static async newCategory(categoryDetails: categoryInterface): Promise<void> {
@@ -15,14 +17,18 @@ export class categoryService {
         const category: categoryInterface | null = await Category.findOneAndUpdate(categoryId, categoryDetails);
 
         if (!category) {
-            throw new Error("Category is not listed");
+            throw new CustomError(HttpStatusConstants.RESOURCE_NOT_FOUND.httpStatusCode, "Category is not Listed")
         } else {
             await category.save();
         }
     }
 
     static async categoryDeletion(categoryId: string): Promise<void> {
-        await Category.findByIdAndDelete(categoryId)
+        const category: categoryInterface | null = await Category.findByIdAndDelete(categoryId)
+
+        if (!category) {
+            throw new CustomError(HttpStatusConstants.RESOURCE_NOT_FOUND.httpStatusCode, "Category is not Listed")
+        }
     }
 
     static async getCategory(page: number, limit: number, query: any) {

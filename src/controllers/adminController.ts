@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { adminService } from "../services/adminService";
 import { adminInterface } from "../constants/interface";
 import { bookInterface } from "../constants/interface";
@@ -11,7 +11,7 @@ import Category from "../models/categoryModel";
 
 export class adminControl {
 
-    static async signUpAdmin(req: Request, res: Response): Promise<void> {
+    static async signUpAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const admin: adminInterface = req.body;
 
@@ -19,11 +19,11 @@ export class adminControl {
 
             res.status(200).json({ message: 'Admin successfully registered' });
         } catch (error: any) {
-            res.status(400).json({ error: error.message })
+            next(error)
         }
     }
 
-    static async loginAdmin(req: Request, res: Response): Promise<void> {
+    static async loginAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const userName: string = req.body.userName;
             const password: string = req.body.password
@@ -32,11 +32,11 @@ export class adminControl {
 
             res.status(200).json({ data: token, message: "Successfully Log In" })
         } catch (error: any) {
-            res.status(400).json({ error: error.message })
+            next(error)
         }
     }
 
-    static async addBook(req: Request, res: Response): Promise<void> {
+    static async addBook(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const book: bookInterface = req.body
 
@@ -44,11 +44,11 @@ export class adminControl {
 
             res.status(200).json({ data: newBook });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error);
         }
     }
 
-    static async updateBook(req: Request, res: Response): Promise<void> {
+    static async updateBook(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const book: bookInterface = req.body
             const bookId: Types.ObjectId = new Types.ObjectId(req.params.bookId);
@@ -57,11 +57,11 @@ export class adminControl {
 
             res.status(200).json({ message: "Book updated successfully" });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error);
         }
     }
 
-    static async deleteBook(req: Request, res: Response): Promise<void> {
+    static async deleteBook(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const bookId: Types.ObjectId = new Types.ObjectId(req.params.bookId);
 
@@ -69,70 +69,67 @@ export class adminControl {
 
             res.status(200).json({ message: "Book deleted successfully" });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error);
         }
     }
 
-    static async retriveAuthor(req: Request, res: Response) {
+    static async retriveAuthor(req: Request, res: Response, next: NextFunction) {
         try {
-            const page = Number(req.query.page);
-            const limit = Number(req.query.limit);
             let query: any = {};
+            const { searchParameter, nationality, page, limit } = req.query
 
-            if (req.query.searchParameter) {
-                query.authorName = req.query.searchParameter;
+            if (searchParameter) {
+                query.authorName = searchParameter;
             }
-            if (req.query.nationality) {
-                query.nationality = req.query.nationality;
+            if (nationality) {
+                query.nationality = nationality;
             }
 
-            const data = await authorService.getAuthor(page, limit, query);
+            const data = await authorService.getAuthor(Number(page), Number(limit), query);
 
             res.status(200).json({ data });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error);
         }
     }
 
-    static async retriveCategory(req: Request, res: Response) {
+    static async retriveCategory(req: Request, res: Response, next: NextFunction) {
         try {
-            const page = Number(req.query.page);
-            const limit = Number(req.query.limit);
             let query: any = {};
+            const { searchParameter, page, limit } = req.query
 
-            if (req.query.searchParameter) {
-                query.categoryName = req.query.searchParameter;
+            if (searchParameter) {
+                query.categoryName = searchParameter;
             }
 
-            const data = await categoryService.getCategory(page, limit, query);
+            const data = await categoryService.getCategory(Number(page), Number(limit), query);
 
             res.status(200).json({ data });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error);
         }
     }
 
-    static async retriveBook(req: Request, res: Response) {
+    static async retriveBook(req: Request, res: Response, next: NextFunction) {
         try {
-            const page = Number(req.query.page);
-            const limit = Number(req.query.limit);
             let query: any = {};
+            const { searchParameter, author, category, page, limit } = req.query
 
-            if (req.query.searchParameter) {
-                query.bookTitle = req.query.searchParameter;
+            if (searchParameter) {
+                query.bookTitle = searchParameter;
             }
-            if (req.query.author) {
-                query.author = (await Author.findOne({ authorName: req.query.author }))?._id;
+            if (author) {
+                query.author = (await Author.findOne({ authorName: author }))?._id;
             }
-            if (req.query.category) {
-                query.category = (await Category.findOne({ categoryName: req.query.category }))?._id;
+            if (category) {
+                query.category = (await Category.findOne({ categoryName: category }))?._id;
             }
 
-            const data = await bookService.getBook(page, limit, query);
+            const data = await bookService.getBook(Number(page), Number(limit), query);
 
             res.status(200).json({ data });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error);
         }
     }
 }

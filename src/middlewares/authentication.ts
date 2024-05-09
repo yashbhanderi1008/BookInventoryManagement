@@ -3,6 +3,8 @@ import Author from '../models/authorModel';
 import { Request, Response, NextFunction } from 'express';
 import { Types } from "mongoose";
 import Admin from "../models/adminModel";
+import CustomError from "../utils/customError";
+import HttpStatusConstants from "../constants/HTTPStatusConstant";
 
 export interface AuthenticatedRequest extends Request {
     aId?: string
@@ -14,7 +16,7 @@ export const authorizeAuthor = async (req: Request, res: Response, next: NextFun
         let token = req.header('Authorization');
 
         if (!token) {
-            return res.status(401).send({ message: 'Token is not set in Request Header' });
+            return next(new CustomError(HttpStatusConstants.TOKEN_EXPIRED.httpStatusCode, HttpStatusConstants.TOKEN_EXPIRED.body.message))
         }
 
         token = token.replace('Bearer ', '');
@@ -24,14 +26,14 @@ export const authorizeAuthor = async (req: Request, res: Response, next: NextFun
         const author = await Author.findById(decoded.aId);
 
         if (!author) {
-            return res.status(401).send({ message: 'Authorization Error' });
+            return next(new CustomError(HttpStatusConstants.UNAUTHORIZED.httpStatusCode, HttpStatusConstants.UNAUTHORIZED.body.message))
         }
 
         (req as AuthenticatedRequest).aId = decoded.aId.toString();
 
         next();
     } catch (error: any) {
-        res.status(500).send({ message: error.message || 'Internal Server Error' });
+        return next(new CustomError(HttpStatusConstants.INTERNAL_SERVER_ERROR.httpStatusCode, HttpStatusConstants.INTERNAL_SERVER_ERROR.body.message))
     }
 }
 
@@ -40,7 +42,7 @@ export const authorizeAdmin = async (req: Request, res: Response, next: NextFunc
         let token = req.header('Authorization');
 
         if (!token) {
-            return res.status(401).send({ message: 'Token is not set in Request Header' });
+            return next(new CustomError(HttpStatusConstants.TOKEN_EXPIRED.httpStatusCode, HttpStatusConstants.TOKEN_EXPIRED.body.message))
         }
 
         token = token.replace('Bearer ', '');
@@ -50,13 +52,13 @@ export const authorizeAdmin = async (req: Request, res: Response, next: NextFunc
         const admin = await Admin.findById(decoded.adminId);
 
         if (!admin) {
-            return res.status(401).send({ message: 'Authorization Error' });
+            return next(new CustomError(HttpStatusConstants.UNAUTHORIZED.httpStatusCode, HttpStatusConstants.UNAUTHORIZED.body.message))
         }
 
         (req as AuthenticatedRequest).adminId = decoded.adminId.toString();
 
         next();
     } catch (error: any) {
-        res.status(500).send({ message: error.message || 'Internal Server Error' });
+        return next(new CustomError(HttpStatusConstants.INTERNAL_SERVER_ERROR.httpStatusCode, HttpStatusConstants.INTERNAL_SERVER_ERROR.body.message))
     }
 }

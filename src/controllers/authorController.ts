@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { authorInterface, bookInterface } from "../constants/interface";
 import { authorService } from "../services/authorService";
 import { bookService } from "../services/bookService";
@@ -8,7 +8,7 @@ import Book from "../models/bookModel";
 import Category from "../models/categoryModel";
 
 export class authorControl {
-    static async signUpAuthor(req: Request, res: Response): Promise<void> {
+    static async signUpAuthor(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const author: authorInterface = req.body;
 
@@ -16,11 +16,11 @@ export class authorControl {
 
             res.status(200).json({ message: 'Author successfully registered' });
         } catch (error: any) {
-            res.status(400).json({ error: error.message })
+            next(error)
         }
     }
 
-    static async loginAuthor(req: Request, res: Response): Promise<void> {
+    static async loginAuthor(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const authorName: string = req.body.authorName;
             const password: string = req.body.password
@@ -29,61 +29,64 @@ export class authorControl {
 
             res.status(200).json({ data: token, message: "Successfully Log In" })
         } catch (error: any) {
-            res.status(400).json({ error: error.message })
+            next(error)
         }
     }
 
-    static async updateAuthor(req: Request, res: Response): Promise<void> {
+    static async updateAuthor(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const author: authorInterface = req.body;
 
             const aId: string | undefined = (req as AuthenticatedRequest).aId
 
-            if (aId !== undefined) {
+            if (aId) {
                 await authorService.updateDetails(author, aId);
             }
 
             res.status(200).json({ message: "Author updated successfully" })
         } catch (error: any) {
-            res.status(400).json({ error: error.message })
+            next(error)
         }
     }
 
-    static async deleteAuthor(req: Request, res: Response): Promise<void> {
+    static async deleteAuthor(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const aId: string | undefined = (req as AuthenticatedRequest).aId
 
-            if (aId !== undefined) {
+            if (aId) {
                 await authorService.deleteDetails(aId);
             }
 
             res.status(200).json({ message: "Author deleted successfully" })
         } catch (error: any) {
-            res.status(400).json({ error: error.message })
+            next(error)
         }
     }
 
-    static async addBook(req: Request, res: Response): Promise<void> {
+    static async addBook(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
-            const aId: string | undefined = (req as AuthenticatedRequest).aId
-            req.body.author = aId;
-            const book: bookInterface = req.body;
+            const aId: string | undefined = (req as AuthenticatedRequest).aId;
+            
+            if (aId) {
+                req.body.author = aId;
+                const book: bookInterface = req.body;
 
-            const newBook = await bookService.newBook(book);
+                const newBook = await bookService.newBook(book);
 
-            res.status(200).json({ data: newBook });
+                res.status(200).json({ data: newBook });
+            }
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error)
         }
     }
 
-    static async updateBook(req: Request, res: Response): Promise<void> {
+    static async updateBook(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const book: bookInterface = req.body
             const aId: string | undefined = (req as AuthenticatedRequest).aId
             const bookId: Types.ObjectId = new Types.ObjectId(req.params.bookId);
 
-            if (aId !== undefined) {
+            if (aId) {
                 const books: bookInterface[] = await Book.find({ author: aId });
 
                 const bookIds: string[] = books.map(book => book._id.toString());
@@ -96,16 +99,16 @@ export class authorControl {
                 }
             }
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error)
         }
     }
 
-    static async deleteBook(req: Request, res: Response): Promise<void> {
+    static async deleteBook(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
             const aId: string | undefined = (req as AuthenticatedRequest).aId
             const bookId: Types.ObjectId = new Types.ObjectId(req.params.bookId);
 
-            if (aId !== undefined) {
+            if (aId) {
                 const books: bookInterface[] = await Book.find({ author: aId });
                 const bookIds: string[] = books.map(book => book._id.toString());
 
@@ -117,29 +120,28 @@ export class authorControl {
                 }
             }
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error)
         }
     }
 
-    static async retriveBook(req: Request, res: Response) {
+    static async retriveBook(req: Request, res: Response, next: NextFunction) {
         try {
-            const page = Number(req.query.page);
-            const limit = Number(req.query.limit);
             let query: any = {};
+            const { searchParameter, category, page, limit } = req.query
 
-            if (req.query.searchParameter) {
-                query.bookTitle = req.query.searchParameter;
+            if (searchParameter) {
+                query.bookTitle = searchParameter;
             }
-            if (req.query.category) {
-                query.category = (await Category.findOne({ categoryName: req.query.category }))?._id;
+            if (category) {
+                query.category = (await Category.findOne({ categoryName: category }))?._id;
             }
             query.author = (req as AuthenticatedRequest).aId;
-            
-            const data = await bookService.getBook(page, limit, query);
+
+            const data = await bookService.getBook(Number(page), Number(limit), query);
 
             res.status(200).json({ data });
         } catch (error: any) {
-            res.status(400).json({ error: error.message });
+            next(error)
         }
     }
 }
