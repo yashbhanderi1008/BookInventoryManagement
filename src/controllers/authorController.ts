@@ -130,12 +130,13 @@ export class authorControl {
             const { searchParameter, category, page, limit } = req.query
 
             if (searchParameter) {
-                query.bookTitle = searchParameter;
+                query.bookTitle = { $regex: searchParameter, $options: 'i' };
             }
             if (category) {
                 query.category = (await Category.findOne({ categoryName: category }))?._id;
             }
-            query.author = (req as AuthenticatedRequest).aId;
+
+            query.author = new Types.ObjectId((req as AuthenticatedRequest).aId);
 
             const data = await bookService.getBook(Number(page), Number(limit), query);
 

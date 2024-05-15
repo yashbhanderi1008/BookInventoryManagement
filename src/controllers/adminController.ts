@@ -116,7 +116,7 @@ export class adminControl {
             const { searchParameter, author, category, page, limit } = req.query
 
             if (searchParameter) {
-                query.bookTitle = searchParameter;
+                query.bookTitle = { $regex: searchParameter, $options: 'i' };
             }
             if (author) {
                 query.author = (await Author.findOne({ authorName: author }))?._id;
